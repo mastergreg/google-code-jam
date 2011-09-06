@@ -6,7 +6,7 @@
 --
 -- Creation Date : 06-09-2011
 --
--- Last Modified : Tue 06 Sep 2011 02:35:41 AM EEST
+-- Last Modified : Tue 06 Sep 2011 07:24:54 PM EEST
 --
 -- Created By : Greg Liras <gregliras@gmail.com>
 --
@@ -20,6 +20,15 @@ getStats =
     inp <- getLine
     return (map rInt (split inp ' '))
 
+condition0 :: Integer->Integer->Bool
+condition0 pD pG =
+  do
+    if pG == 0
+    then
+      if pD == 0
+      then True
+      else False
+    else True
 condition1 :: Integer->Integer->Bool
 condition1 pD pG = 
   do
@@ -43,7 +52,7 @@ condition2 (n:ns) pD pG =
 
 
 checkStats :: [Integer] -> Bool
-checkStats [n,pD,pG]  =  (condition1 pD pG) && (condition2 [1..n] pD pG)
+checkStats [n,pD,pG]  =  (condition0 pD pG ) && (condition1 pD pG) && (condition2 [1..n] pD pG)
 checkStats _          = False
     
 
