@@ -6,7 +6,7 @@
 --
 -- Creation Date : 06-09-2011
 --
--- Last Modified : Wed 07 Sep 2011 12:10:22 AM EEST
+-- Last Modified : Thu 08 Sep 2011 06:45:55 PM EEST
 --
 -- Created By : Greg Liras <gregliras@gmail.com>
 --
@@ -14,6 +14,7 @@
 
 
 import List
+import Data.List
 import Data.Set
 import Data.Ord (comparing)
  
@@ -59,7 +60,37 @@ split (c:cs) delim
                 rest = Main.split cs delim
 
 
+groupByElemIndices l ls = 
 
+
+groupByElemIndicesH l word ls = 
+  filter ind ls
+  where
+    ind x = x == elemIndices l word
+
+  
+
+findMaxWord :: [String]->String->String
+findMaxWord dictionary letters = findMaxWordH (List.map (\x -> (x,x)) dictionary) (buildLetterSet dictionary) letters
+    
+deleteAllelements :: Char->(String,String)->(String,String)
+deleteAllelements l (a,b) = ((concat (Main.split a l)),b)
+
+
+makeNextDoubleDict doubleDict l = (List.map (deleteAllelements l) doubleDict)
+
+findMaxWordH :: [(String,String)]->String->String->String
+findMaxWordH [(_,ans)]    _         _         = ans   
+findMaxWordH double_dict letterSet (l:etters) = 
+  do
+    if elem l letterSet
+    then findMaxWordH  (makeNextDoubleDict double_dict l) (List.delete l letterSet) etters
+    else findMaxWordH double_dict letterSet etters
+
+
+
+buildLetterSet :: [String]->String
+buildLetterSet ss = toList (fromList (intercalate "" ss))
 
 
 getAll x cases
