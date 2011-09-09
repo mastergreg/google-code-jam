@@ -6,7 +6,7 @@
 --
 -- Creation Date : 06-09-2011
 --
--- Last Modified : Thu 08 Sep 2011 06:45:55 PM EEST
+-- Last Modified : Fri 09 Sep 2011 04:05:50 PM EEST
 --
 -- Created By : Greg Liras <gregliras@gmail.com>
 --
@@ -14,12 +14,9 @@
 
 
 import List
-import Data.List
 import Data.Set
-import Data.Ord (comparing)
  
-lsort :: [[a]] -> [[a]]
-lsort = sortBy (comparing length)
+import Data.List (intercalate)
 
 rInt x = read x :: Integer
 
@@ -35,7 +32,7 @@ getLines n maX acc
     do
       inp <- getLine
       getLines (n+1) maX (inp:acc)
-  | otherwise = return acc
+  | otherwise = return (reverse acc)
 
 
 
@@ -43,13 +40,37 @@ getLines n maX acc
     
 filterByLength x ls = List.filter (\n -> length n == x) ls
 
+filterByNotElem letter wordlist = List.filter (\x -> notElem letter x) wordlist
+
+filterByElemIndices ::String->[String]->Char->[String]
+filterByElemIndices word wordlist letter = 
+  let
+    indices = elemIndices letter word
+  in
+    List.filter (\x -> (elemIndices letter x) == indices) wordlist
+
+filterByFirstOccurance :: [String]->[String]->String
+filterByFirstOccurance (dict:ionary) answers =
+  if elem dict answers
+  then dict
+  else filterByFirstOccurance ionary answers
+
+filterByMaxInt answers =
+  let
+    (sstr,iint) = unzip answers
+  in
+    let
+      (answer,_) = unzip (List.filter (\(x,y) -> y==(maximum iint)) answers)
+    in
+      answer
+
 getLengthSists x ls = getLengthSistsH x ls []
 
-getLengthSistsH [] _ acc = acc
+getLengthSistsH [] _ acc = reverse acc
 getLengthSistsH (x:xs) ls acc = getLengthSistsH xs ls ((filterByLength x ls):acc)
 
 lengthSet :: [[a]]-> [Int]
-lengthSet ls = toAscList (fromAscList (List.map length ls))
+lengthSet ls = toList (fromList (List.map length ls))
 
 split :: String -> Char -> [String]
 split [] delim = [""]
@@ -60,37 +81,52 @@ split (c:cs) delim
                 rest = Main.split cs delim
 
 
-groupByElemIndices l ls = 
+groupByLength ls = 
+  let
+    lengthS = lengthSet ls
+  in
+    getLengthSists lengthS ls
 
 
-groupByElemIndicesH l word ls = 
-  filter ind ls
-  where
-    ind x = x == elemIndices l word
+findWordListSteps :: [String]->String->[(String,Int)]
+findWordListSteps wordlist letters = [findSteps x wordlist 0 letters | x <- wordlist]
 
-  
+isInWordList letter wordlist = any (elem letter) wordlist
 
-findMaxWord :: [String]->String->String
-findMaxWord dictionary letters = findMaxWordH (List.map (\x -> (x,x)) dictionary) (buildLetterSet dictionary) letters
-    
-deleteAllelements :: Char->(String,String)->(String,String)
-deleteAllelements l (a,b) = ((concat (Main.split a l)),b)
+findSteps :: String->[String]->Int->String->(String,Int)
+findSteps word _       counter [] = (word,counter)
+findSteps word wordlist counter (letter:restLetters)
+--  let
+--    lettersSet = buildLetterSet wordlist
+--  in
+  | isInWordList letter wordlist =
+      if elem letter word
+      then
+        let
+          newWordList = filterByElemIndices word wordlist letter
+        in
+          findSteps word newWordList counter restLetters
+      else 
+        let
+          newWordList = filterByNotElem letter wordlist
+        in
+          findSteps word newWordList (counter+1) restLetters
+  | otherwise =  findSteps word wordlist counter restLetters
+
+          
+--Finds Word
+
+findMaxWord :: [[String]]->String->[(String,Int)]
+findMaxWord dictionary letters = concat [findWordListSteps x letters | x <- dictionary]
+
+findAllWords :: [String]->String->String
+findAllWords dictionary sequence = 
+  let
+    wordlists = groupByLength dictionary
+  in
+    filterByFirstOccurance dictionary (filterByMaxInt (findMaxWord wordlists sequence))
 
 
-makeNextDoubleDict doubleDict l = (List.map (deleteAllelements l) doubleDict)
-
-findMaxWordH :: [(String,String)]->String->String->String
-findMaxWordH [(_,ans)]    _         _         = ans   
-findMaxWordH double_dict letterSet (l:etters) = 
-  do
-    if elem l letterSet
-    then findMaxWordH  (makeNextDoubleDict double_dict l) (List.delete l letterSet) etters
-    else findMaxWordH double_dict letterSet etters
-
-
-
-buildLetterSet :: [String]->String
-buildLetterSet ss = toList (fromList (intercalate "" ss))
 
 
 getAll x cases
@@ -99,12 +135,12 @@ getAll x cases
       nm <- getNM
       dictionary <- getLines 1 (head(nm)) []
       sequences <- getLines 1 (head(tail(nm))) []
-      putStrLn ("Case #"++(show x)++": "++ ((show nm)++"\n"++(show (lsort dictionary)++"\n"++(show (lsort sequences)))))
+      putStrLn ("Case #"++(show x)++": "++(intercalate " " [findAllWords dictionary x | x<-sequences]))
       getAll (x+1) cases
   | otherwise = return ()
                     
---main = 
---  do
---    cases <- readLn
---    --putStrLn (show cases)
---    getAll 1 cases
+main = 
+  do
+    cases <- readLn
+    --putStrLn (show cases)
+    getAll 1 cases

@@ -1,0 +1,48 @@
+	Fri Sep  9 15:24 2011 Time and Allocation Profiling Report  (Final)
+
+	   solve +RTS -p -RTS
+
+	total time  =        0.48 secs   (24 ticks @ 20 ms)
+	total alloc =  27,743,896 bytes  (excludes profiling overheads)
+
+COST CENTRE                    MODULE               %time %alloc
+
+isInWordList                   Main                  83.3    4.5
+filterByElemIndices            Main                  12.5   64.5
+findSteps                      Main                   4.2    9.8
+lengthSet                      Main                   0.0    1.8
+getLines                       Main                   0.0    1.8
+findWordListSteps              Main                   0.0    1.3
+filterByNotElem                Main                   0.0   12.6
+filterByMaxInt                 Main                   0.0    1.9
+
+
+                                                                                               individual    inherited
+COST CENTRE              MODULE                                               no.    entries  %time %alloc   %time %alloc
+
+MAIN                     MAIN                                                   1           0   0.0    0.0   100.0  100.0
+ main                    Main                                                 274           2   0.0    0.0   100.0  100.0
+  getAll                 Main                                                 275          11   0.0    0.1   100.0  100.0
+   findAllWords          Main                                                 280          68   0.0    0.0   100.0   97.7
+    filterByFirstOccurance Main                                                 293        1897   0.0    0.0     0.0    0.0
+    filterByMaxInt       Main                                                 288          68   0.0    1.9     0.0    1.9
+    findMaxWord          Main                                                 285          68   0.0    0.6   100.0   93.3
+     findWordListSteps   Main                                                 286         186   0.0    1.3   100.0   92.7
+      findSteps          Main                                                 289      162432   4.2    9.8   100.0   91.4
+       filterByNotElem   Main                                                 292        6923   0.0   12.6     0.0   12.6
+       filterByElemIndices Main                                                 291       24696  12.5   64.5    12.5   64.5
+       isInWordList      Main                                                 290      156416  83.3    4.5    83.3    4.5
+    groupByLength        Main                                                 281          68   0.0    0.0     0.0    2.5
+     getLengthSists      Main                                                 283          68   0.0    0.0     0.0    0.6
+      getLengthSistsH    Main                                                 284          68   0.0    0.0     0.0    0.6
+       filterByLength    Main                                                 287         186   0.0    0.6     0.0    0.6
+     lengthSet           Main                                                 282          68   0.0    1.8     0.0    1.8
+   getLines              Main                                                 278         719   0.0    1.8     0.0    1.8
+   getNM                 Main                                                 276          10   0.0    0.0     0.0    0.3
+    rInt                 Main                                                 279          20   0.0    0.3     0.0    0.3
+    split                Main                                                 277          56   0.0    0.0     0.0    0.0
+ CAF                     GHC.Read                                             245           1   0.0    0.0     0.0    0.0
+ CAF                     Text.Read.Lex                                        233           4   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Handle.FD                                     203           3   0.0    0.0     0.0    0.0
+ CAF                     GHC.IO.Encoding.Iconv                                161           2   0.0    0.0     0.0    0.0
+ CAF                     GHC.Conc.Signal                                      158           1   0.0    0.0     0.0    0.0
