@@ -6,7 +6,7 @@
 --
 -- Creation Date : 06-09-2011
 --
--- Last Modified : Thu 15 Sep 2011 04:23:07 AM EEST
+-- Last Modified : Thu 15 Sep 2011 07:18:32 PM EEST
 --
 -- Created By : Greg Liras <gregliras@gmail.com>
 --
@@ -18,12 +18,9 @@ import Data.Set
  
 import Data.List (intercalate)
 
-data MyData = Words [String] Int
 
 
 
-buildDataList ::[[String]]->[MyData]
-buildDataList (wordList:rList) = Words wordList 0 : buildDataList rList
   
 
 
@@ -47,13 +44,18 @@ getLines n maX acc
   | otherwise = return (reverse acc)
 
 
+instance Show MyData where
+  show (Words strings integer) = show strings ++ " , " ++ show integer
+
+data MyData = Words [String] Int
 
 
+buildDataList ::[[String]]->[MyData]
+buildDataList [] = []
+buildDataList (wordList:rList) = Words wordList 0 : buildDataList rList
+  
     
 filterByLength x ls = List.filter (\n -> length n == x) ls
-
-filterByNotElem :: Char->[String]->[String]
-filterByNotElem letter wordlist = List.filter (\x -> notElem letter x) wordlist
 
 filterByElemIndices ::String->[String]->Char->[String]
 filterByElemIndices word wordlist letter = 
@@ -101,58 +103,45 @@ groupByLength ls =
     getLengthSists lengthS ls
 
 
-findWordListSteps :: [String]->String->[(String,Int)]
-findWordListSteps wordlist letters = [findSteps x wordlist 0 letters | x <- wordlist]
-
-isInWordList letter wordlist = any (elem letter) wordlist
-
-findSteps :: String->[String]->Int->String->(String,Int)
-findSteps word _       counter [] = (word,counter)
-findSteps word wordlist counter (letter:restLetters)
---  let
---    lettersSet = buildLetterSet wordlist
---  in
-  | isInWordList letter wordlist =
-      if elem letter word
-      then
-        let
-          newWordList = filterByElemIndices word wordlist letter
-        in
-          findSteps word newWordList counter restLetters
-      else 
-        let
-          newWordList = filterByNotElem letter wordlist
-        in
-          findSteps word newWordList (counter+1) restLetters
-  | otherwise =  findSteps word wordlist counter restLetters
-
 
 findMaxWordFast dictionary lettersList = 
   let
     groupedByLength = groupByLength dictionary
   in
     let
-      allAnswers = [filterByFirstOccurance dictionary (countSteps groupedByLength x)  | x <- lettersList]
+      allAnswers = List.map (filterByFirstOccurance dictionary) (findEveryThing [(countSteps (buildDataList groupedByLength) x)  | x <- lettersList])
     in
       allAnswers --[filterByFirstOccurance x dictionary | x <- allAnswers]
 
 
 
-countSteps ::[[String]]->String->[String]
-countSteps wordListList [] = concat wordListList
+findEveryThing :: [[MyData]]-> [[String]]
+findEveryThing myDataLists =
+  List.map (\x -> let max = getMaxCounter x 0 in filterByMaxCounter x max []) myDataLists
+
+
+filterByMaxCounter :: [MyData] -> Int -> [[String]] -> [String]
+filterByMaxCounter [] _ acc = concat acc
+filterByMaxCounter ((Words string counter):rlist) max acc = 
+  if (counter == max)
+    then filterByMaxCounter rlist max (string:acc)
+    else filterByMaxCounter rlist max acc
+
+getMaxCounter [] max = max
+getMaxCounter ((Words _ counter):rlist) max =
+  if (max < counter) 
+    then getMaxCounter rlist counter
+    else getMaxCounter rlist max
+
+
+
+countSteps ::[MyData]->String->[MyData]
+countSteps wordListList [] = wordListList
 countSteps wordListList (letter:s) = 
   let
-    nextWordListList = List.filter (\x -> x/=[]) [filterByNotElem letter x | x <- wordListList]
+    nextWordListList = concat [groupByElemIndices letter wordlist | wordlist <- wordListList]
   in
-    if nextWordListList == []
-      then countSteps wordListList s
-      else
-      let
-        cleanNextWordListList = removeFound nextWordListList
-      in
-        if cleanNextWordListList == []
-        then concat nextWordListList 
-        else countSteps cleanNextWordListList s
+    countSteps nextWordListList s
 
         
 getWordListsFromTuples tupleWordList = 
@@ -165,36 +154,46 @@ getWordListsFromTuples tupleWordList =
 getElemIndicesForAllWords wordList letter= 
   [(x,y) | x <- wordList,let y = elemIndices letter x]
 
-  
-groupByElemIndices :: Char->[String]->[[String]]
-groupByElemIndices letter wordList = 
+
+
+
+groupByElemIndices :: Char->MyData->[MyData]
+groupByElemIndices letter (Words wordList counter) = 
   let
     toupleWordList = getElemIndicesForAllWords wordList letter
   in
-    groupByElemIndicesH toupleWordList []
+    buildNextList (groupByElemIndicesH toupleWordList []) counter
 
-groupByElemIndicesH ::[(String,[Int])]->[[(String,[Int])]]->[[String]]
-groupByElemIndicesH [] acc = List.map getWordListsFromTuples acc
+
+
+
+
+buildNextList :: [[(String,[Int])]]->Int->[MyData]
+buildNextList toupleWordLists prevCounter =
+  let
+    wordListsWithNoLetter = List.map getWordListsFromTuples (List.filter (any (\(x,y) -> y == [] )) toupleWordLists)
+    wordListsWithLetter = List.map getWordListsFromTuples (List.filter (any (\(x,y) -> y /= [] ) ) toupleWordLists)
+    wasIn = not (List.null wordListsWithLetter)
+  in
+    if wasIn
+    then 
+      let 
+        nextDataWithout = [Words x (prevCounter+1) | x <- wordListsWithNoLetter]
+        nextDataWith = [Words x prevCounter | x <- wordListsWithLetter]
+      in
+        nextDataWith++nextDataWithout
+    else
+      [Words x prevCounter | x <- wordListsWithNoLetter]
+
+
+groupByElemIndicesH ::[(String,[Int])]->[[(String,[Int])]]->[[(String,[Int])]]
+groupByElemIndicesH [] acc = acc
 groupByElemIndicesH ((a,b):leWordList) acc = 
   let
     first = List.filter (\(x,y) -> y==b) leWordList
     rest = List.filter (\(x,y) -> y/=b) leWordList
   in
     groupByElemIndicesH rest (((a,b):first):acc)
-
-removeFound ls = List.filter (\x -> length x > 1) ls
-
---Finds Word
-
-findMaxWord :: [[String]]->String->[(String,Int)]
-findMaxWord dictionary letters = concat [findWordListSteps x letters | x <- dictionary]
-
-findAllWords :: [String]->String->String
-findAllWords dictionary sequence = 
-  let
-    wordlists = groupByLength dictionary
-  in
-    filterByFirstOccurance dictionary (filterByMaxInt (findMaxWord wordlists sequence))
 
 
 
