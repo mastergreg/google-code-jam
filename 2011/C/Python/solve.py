@@ -7,7 +7,7 @@
 #
 #* Creation Date : 16-09-2011
 #
-#* Last Modified : Fri 16 Sep 2011 04:23:19 AM EEST
+#* Last Modified : Fri 16 Sep 2011 04:27:58 AM EEST
 #
 #* Created By : Greg Liras <gregliras@gmail.com>
 #
@@ -26,6 +26,8 @@ def playMaxTurns(cards):
     if t > maxT:
       maxT = t
       maxI = i
+  if maxT = 0: # if aint getting no turns for me gimme score
+    return playMaxScore(cards)
   return maxI
 def playMaxCards(cards):
   maxI = 0
@@ -48,6 +50,9 @@ def playMaxScore(cards):
 
 def playGetAll(rounds,hand,deck,handList,deckList):
   if rounds > 1:
+    return playMaxCards(handList)
+  else:
+    return playMaxTurns(handList)
 
 
 def pick_card(rds,cAh,cId,cAhL,cIdL):
