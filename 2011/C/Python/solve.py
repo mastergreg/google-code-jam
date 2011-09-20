@@ -7,7 +7,7 @@
 #
 #* Creation Date : 16-09-2011
 #
-#* Last Modified : Fri 16 Sep 2011 04:39:33 AM EEST
+#* Last Modified : Tue 20 Sep 2011 09:23:52 PM EEST
 #
 #* Created By : Greg Liras <gregliras@gmail.com>
 #
@@ -18,82 +18,144 @@ import sys
 
 
 
-def playMaxTurns(cards):
-  maxI = 0
-  maxT = 0
+def hasT(cards):
+  for (c,s,t) in cards:
+    if t>0:
+      return True
+  return False
+
+def playT(cards):
+  for i in range(len(cards)):
+    #print i
+    (c,s,t) = cards[i]
+    if t>0:
+      return cards.pop(i)
+
+def hasC(cards):
+  for (c,s,t) in cards:
+    if c>0:
+      return True
+  return False
+
+def playC(cards):
   for i in range(len(cards)):
     (c,s,t) = cards[i]
-    if t > maxT:
-      maxT = t
+    maxC = 0
+    maxI = 0
+    if c>maxC:
       maxI = i
-  if maxT == 0: # if aint getting no turns for me gimme score
-    return playMaxScore(cards)
-  return maxI
-def playMaxCards(cards):
-  maxI = 0
-  maxC = 0
-  for i in range(len(cards)):
-    (c,s,t) = cards[i]
-    if c > maxC:
       maxC = c
-      maxI = i
-  return maxI
-def playMaxScore(cards):
-  maxI = 0
+  return cards.pop(i)
+
+def lift(c,hand_l,deck_l):
+  if c < len(deck_l):  
+    hand_l.extend(deck_l[:c])
+    del deck_l[:c]
+  else:
+    hand_l.extend(deck_l)
+    del deck_l[:]
+    #print hand_l,deck_l
+def playS(cards):
   maxS = 0
+  maxI = 0
   for i in range(len(cards)):
     (c,s,t) = cards[i]
-    if s > maxS:
-      maxS = s
+    if s>maxS:
       maxI = i
-  return maxI
-
-def playGetAll(rounds,hand,deck,handList,deckList):
-  if rounds > 1:
-    return playMaxCards(handList)
+      maxS = s
+  if maxS == 0:
+    return (0,0,0)
   else:
-    return playMaxTurns(handList)
+    r = cards.pop(maxI)
+  return r
 
 
-def pick_card(rds,cAh,cId,cAhL,cIdL):
-  if cAh == 1:
-    return 0
-  if cId == 0:
-    return playMaxTurns(cAhL)
+
+
+def playBoth(score,rounds,hang,hand_list,deck_list):
+  hl1 = list(hand_list)
+  dl1 = list(deck_list)
+  
+  (c1,s1,t1) = playC(hl1)
+  lift(c1,hl1,dl1)
+  hand1 = len(hl1)
+  rounds1 = rounds + t1 - 1
+  score1 = score+s1
+  score1 = play(score1,rounds1,hand1,hl1,dl1)
+  
+  hl2 = list(hand_list)
+  dl2 = list(deck_list)
+
+  (c2,s2,t2) = playS(hl2)
+  lift(c2,hl2,dl2)
+  hand2 = len(hl2)
+  rounds2 = rounds + t2 - 1
+  score2 = score+s2
+  score2 = play(score2,rounds2,hand2,hl2,dl2)
+
+  ans = max([score1,score2])
+  return ans 
+
+
+def play(score,rounds,hand,hand_list,deck_list):
+  if ( rounds>0 and hand>0):
+    my_hand_list = list(hand_list)
+    my_deck_list = list(deck_list)
+    while hasT(my_hand_list):
+      #print my_hand_list,my_deck_list
+      (c,s,t) = playT(my_hand_list)
+      lift(c,my_hand_list,my_deck_list)
+      hand = len(my_hand_list)
+      rounds += t -1
+      score += s
+      #print "Hand:",my_hand_list,"Deck:",my_deck_list
+    if rounds > hand:
+      if hasC(my_hand_list):
+        (c,s,t) = playC(my_hand_list)
+        lift(c,my_hand_list,my_deck_list)
+        hand = len(my_hand_list)
+        rounds += t - 1
+        score += s
+        return play(score,rounds,hand,my_hand_list,my_deck_list)
+      else:
+        (c,s,t) = playS(my_hand_list)
+        lift(c,my_hand_list,my_deck_list)
+        hand = len(my_hand_list)
+        rounds += t - 1
+        score += s
+        return play(score,rounds,hand,my_hand_list,my_deck_list)
+    else:
+      return playBoth(score,rounds,hand,my_hand_list,my_deck_list)
   else:
-    return playGetAll(rds,cAh,cId,cAhL,cIdL)
-
-
-
-f = sys.stdin
-cases = int(f.readline())
-
-
-
-for i in range(cases):
-  cardsAthand = int(f.readline())
-  card_at_hand_list=[]
-  for j in range(cardsAthand):
-    card_at_hand_list.append(tuple(map (int, f.readline().split())))
-  cardsIndeck = int(f.readline())
-  card_in_deck_list=[]
-  for j in range(cardsIndeck):
-    card_in_deck_list.append(tuple(map (int, f.readline().split())))
-  rounds_left = 1
-  score = 0
- 
-  while rounds_left > 0 and cardsAthand > 0:
-    card_number = pick_card(rounds_left,cardsAthand,cardsIndeck,card_at_hand_list,card_in_deck_list)
-    (c,s,t) = card_at_hand_list.pop(card_number)
-    card_at_hand_list += card_in_deck_list[:c]
-    card_in_deck_list = card_in_deck_list[c:]
-    cardsAthand = len(card_at_hand_list)
-    score+=s
-    rounds_left = t-1
+    return score
 
 
 
 
+def main():
+  f = sys.stdin
+  cases = int(f.readline())
 
-  answer = str(score)
-  print "Case #"+str(i+1)+": "+answer
+
+
+  for i in range(cases):
+    cardsAthand = int(f.readline())
+    card_at_hand_list=[]
+    for j in range(cardsAthand):
+      card_at_hand_list.append(tuple(map (int, f.readline().split())))
+    cardsIndeck = int(f.readline())
+    card_in_deck_list=[]
+    for j in range(cardsIndeck):
+      card_in_deck_list.append(tuple(map (int, f.readline().split())))
+    rounds_left = 1
+    score = 0
+    print card_at_hand_list
+    print card_in_deck_list
+    score = play(score,rounds_left,cardsAthand,card_at_hand_list,card_in_deck_list)
+    #print score
+
+    answer = str(score)
+    print "Case #"+str(i+1)+": "+answer
+
+if __name__=="__main__":
+  main()
